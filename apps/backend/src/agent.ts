@@ -171,13 +171,10 @@ function messagesToResult(messages: typeof MessagesAnnotation.State["messages"])
   const allFiles = Array.from(mergedFiles.values());
 
   if (allFiles.length === 0) {
-    const last = messages.at(-1);
     return {
       success: false,
       error:
-        last instanceof AIMessage
-          ? String(last.content)
-          : "Agent failed to generate files.",
+        "No files were generated. Please describe a specific website or app you'd like to build — for example: \"Create a landing page for a coffee shop\".",
     };
   }
 
