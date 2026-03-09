@@ -26,6 +26,7 @@ function PlaygroundContent() {
   const [error, setError] = useState<string | null>(null);
   const [createLogLines, setCreateLogLines] = useState<string[]>([]);
   const createProjectStartedRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Create project via SSE stream when in creating mode (only once)
   useEffect(() => {
@@ -40,6 +41,9 @@ function PlaygroundContent() {
       return;
     }
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     const createProject = async () => {
       try {
         const res = await fetch(`${NEXT_PUBLIC_BACKEND_URL}/project/create-stream`, {
@@ -47,6 +51,7 @@ function PlaygroundContent() {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt }),
+          signal: controller.signal,
         });
 
         if (res.status === 401) {
@@ -64,33 +69,43 @@ function PlaygroundContent() {
         const decoder = new TextDecoder();
         let buffer = "";
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? "";
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
               try {
                 const event = JSON.parse(line.slice(6));
                 if (event.type === "log" && event.message) {
                   setCreateLogLines((prev) => [...prev, event.message]);
                 } else if (event.type === "project" && event.projectId) {
+                  reader.cancel();
                   router.replace(`/playground/${event.projectId}`);
                   return;
                 } else if (event.type === "error" && event.message) {
-                  setError(event.message);
+                  reader.cancel();
+                  const msg = event.message;
+                  setError(msg.length > 200 ? msg.slice(0, 200) + "…" : msg);
                   setIsCreating(false);
                   return;
                 }
-              } catch (_) {}
+              } catch (parseErr) {
+                console.warn("SSE parse error:", parseErr, line);
+              }
             }
           }
+        } finally {
+          reader.releaseLock();
         }
+
         setError("No project returned");
         setIsCreating(false);
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.name === "AbortError") return;
         console.error("Create error:", err);
         setError("Network error");
         setIsCreating(false);
@@ -98,6 +113,10 @@ function PlaygroundContent() {
     };
 
     createProject();
+
+    return () => {
+      controller.abort();
+    };
   }, [isCreatingMode, searchParams, router]);
 
   // Fetch project data only when we have a real projectId

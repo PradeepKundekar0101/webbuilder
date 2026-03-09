@@ -15,7 +15,8 @@
   "packageManager": "pnpm@10.15.0",
   "devDependencies": {
     "@repo/database": "workspace:*",
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "^5.7.0"
   },
   "dependencies": {
     "@e2b/code-interpreter": "^2.3.3",

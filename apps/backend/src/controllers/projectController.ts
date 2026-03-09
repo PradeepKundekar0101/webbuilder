@@ -128,9 +128,18 @@ export async function createProjectStream(req: Request, res: Response) {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
-  const send = (event: object) => res.write(`data: ${JSON.stringify(event)}\n\n`);
+  if (res.socket) {
+    res.socket.setNoDelay(true);
+    res.socket.setTimeout(0);
+  }
+
+  const send = (event: object) => {
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+    if (typeof (res as any).flush === "function") (res as any).flush();
+  };
   console.log("prompt received");
   send({ type: "log", message: "prompt received" });
 
