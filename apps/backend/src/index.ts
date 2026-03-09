@@ -28,7 +28,7 @@ app.use("/api", chatRouter);
 
 
 app.listen(3001, () => {
-    console.log(process.env.OPENROUTER_API_KEY)
+    console.log("OPENROUTER_API_KEY: ", process.env.OPENROUTER_API_KEY)
     console.log("Server running @:3001")
 })
 
