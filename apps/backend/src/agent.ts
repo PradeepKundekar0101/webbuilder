@@ -85,6 +85,7 @@ const llm = new ChatOpenAI({
   model: "anthropic/claude-sonnet-4.5",
   apiKey: OPENROUTER_API_KEY,
   temperature: 0,
+  maxTokens: 32000,
   configuration: {
     baseURL: "https://openrouter.ai/api/v1",
     defaultHeaders: {

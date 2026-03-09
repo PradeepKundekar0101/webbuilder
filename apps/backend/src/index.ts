@@ -3,7 +3,7 @@ import cors from "cors";
 import projectRouter from "./routes/projectRouter.js";
 import authRouter from "./routes/authRouter.js";
 import cookieParser from "cookie-parser";
-import { tr } from "zod/locales";
+
 import chatRouter from "./routes/chatRoutes.js";
 
 
