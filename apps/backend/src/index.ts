@@ -16,7 +16,7 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 }))
 
-app.use(cookieParser());     
+app.use(cookieParser());
 app.use(express.json());
 
 
@@ -28,6 +28,7 @@ app.use("/api", chatRouter);
 
 
 app.listen(3001, () => {
+    console.log(process.env.OPENROUTER_API_KEY)
     console.log("Server running @:3001")
 })
 
